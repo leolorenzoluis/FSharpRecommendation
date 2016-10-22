@@ -1,10 +1,10 @@
 #r "node_modules/fable-core/Fable.Core.dll"
 #load "node_modules/fable-import-react/Fable.Import.React.fs"
 #load "node_modules/fable-import-react/Fable.Helpers.React.fs"
-#load "./components.fsx"
-#load "./domain.fsx"
-#load "./manager.fsx"
-#load "./redux.fsx"
+#load "components.fsx"
+#load "domain.fsx"
+#load "manager.fsx"
+#load "redux.fsx"
 
 open Fable.Import
 open Fable.Core.JsInterop

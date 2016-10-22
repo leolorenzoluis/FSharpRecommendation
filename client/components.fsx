@@ -8,14 +8,15 @@ to make interaction with the tool more idiomatic in F#.
 #r "node_modules/fable-core/Fable.Core.dll"
 #load "node_modules/fable-import-react/Fable.Import.React.fs"
 #load "node_modules/fable-import-react/Fable.Helpers.React.fs"
-#load "./manager.fsx"
-#load "./domain.fsx"
+#load "manager.fsx"
+#load "domain.fsx"
 
 
 open System
 open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Import
+open Domain
 
 module R = Fable.Helpers.React
 open R.Props
