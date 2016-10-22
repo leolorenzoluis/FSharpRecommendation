@@ -1,7 +1,7 @@
 {
     "module": "commonjs",
     "sourceMaps": true,
-    "projFile": "client.fsx",
+    "projFile": "frontend.fsproj",
     "outDir": "out",
     "scripts": {
         "prebuild": "npm install",

@@ -5,6 +5,7 @@
 Open the necessary namespaces, define our domain models (`Todo`, `TodoAction`, `TodoFilter`)
 and some utilities (key codes, `classNames`).
 *)
+module Domain
 
 type Todo = { Text: string; Completed: bool; Id: int } 
 

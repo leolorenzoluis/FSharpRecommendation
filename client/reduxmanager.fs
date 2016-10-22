@@ -1,6 +1,3 @@
-#r "./node_modules/fable-core/Fable.Core.dll"
-
-
 (**
 ## Redux helper
 
@@ -8,6 +5,7 @@ Fable's support for Redux is experimental and there're no bindings available.
 In order to use Redux in you Fable apps, just copy the code of the module below
 and be sure to add Redux as a JS dependency.
 *)
+module ReduxManager
 
 open System
 open Fable.Import

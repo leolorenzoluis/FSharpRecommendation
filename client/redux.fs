@@ -1,8 +1,4 @@
-#load "./manager.fsx"
-#load "./domain.fsx"
-#load "components.fsx"
-
-
+module Redux
 
 open System
 open Fable.Core
@@ -14,7 +10,7 @@ open R.Props
 open Fable.Import
 
 open Domain
-open Manager
+open ReduxManager
 open Components
 
 (**

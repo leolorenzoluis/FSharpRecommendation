@@ -5,10 +5,7 @@ Fable includes [React bindings and helpers](https://www.npmjs.com/package/fable-
 to make interaction with the tool more idiomatic in F#.
 *)
 
-#r "./node_modules/fable-core/Fable.Core.dll"
-#load "./manager.fsx"
-#load "./domain.fsx"
-
+module Components
 
 open System
 open Fable.Core
@@ -42,7 +39,7 @@ type TodoTextInput(props, ctx) as this =
     do this.state <- { Text = defaultArg props.Text "" } 
 
     member this.HandleSubmit(e: React.KeyboardEvent) =
-        if e.which = Domain.ENTER_KEY then
+        if e.which = ENTER_KEY then
             let text = (unbox<string> e.target?value).Trim()
             this.props.OnSave(text)
             if this.props.NewTodo then
@@ -58,7 +55,7 @@ type TodoTextInput(props, ctx) as this =
     member this.render() =
         R.input [
             ClassName(
-                Domain.classNames [
+                classNames [
                     "edit", this.props.Editing
                     "new-todo", this.props.NewTodo
                 ])
@@ -71,7 +68,7 @@ type TodoTextInput(props, ctx) as this =
         ] []
 
 type TodoItemProps =
-    abstract Todo: Domain.Todo
+    abstract Todo: Todo
     abstract EditTodo: int * string -> unit
     abstract DeleteTodo: int -> unit
     abstract CompleteTodo: int -> unit
@@ -119,7 +116,7 @@ type TodoItem(props, ctx) as this =
                     ] []
                 ]
         R.li [ClassName(
-                Domain.classNames [
+                classNames [
                     "completed", this.props.Todo.Completed
                     "editing", this.state.Editing])]
              [element]
@@ -144,16 +141,16 @@ let Header (props: HeaderProps) =
 type FooterProps =
     abstract ActiveCount: int
     abstract CompletedCount: int
-    abstract Filter: Domain.TodoFilter
-    abstract OnShow: Domain.TodoFilter->unit
+    abstract Filter: TodoFilter
+    abstract OnShow: TodoFilter->unit
     abstract OnClearCompleted: React.SyntheticEvent->unit
 
 let Footer =
     let filterTitles =
         dict [
-            Domain.TodoFilter.ShowAll, "All"
-            Domain.TodoFilter.ShowActive, "Active"
-            Domain.TodoFilter.ShowCompleted, "Completed"
+            TodoFilter.ShowAll, "All"
+            TodoFilter.ShowActive, "Active"
+            TodoFilter.ShowCompleted, "Completed"
         ]
     let renderTodoCount activeCount =
         R.span [ClassName "todo-count"] [
@@ -164,7 +161,7 @@ let Footer =
         ]
     let renderFilterLink filter selectedFilter onShow =
         R.a [
-            ClassName (Domain.classNames ["selected", filter = selectedFilter])
+            ClassName (classNames ["selected", filter = selectedFilter])
             Style [unbox("cursor", "pointer")]
             OnClick (fun _ -> onShow filter)
         ] [R.str filterTitles.[filter]]
@@ -177,9 +174,9 @@ let Footer =
         else None
     fun (props: FooterProps) ->
         let listItems =
-            [ Domain.TodoFilter.ShowAll
-              Domain.TodoFilter.ShowActive
-              Domain.TodoFilter.ShowCompleted ]
+            [ TodoFilter.ShowAll
+              TodoFilter.ShowActive
+              TodoFilter.ShowCompleted ]
             |> List.map (fun filter ->
                 [renderFilterLink filter props.Filter props.OnShow]
                 |> R.li [Key (string filter)])
@@ -189,21 +186,21 @@ let Footer =
             R.opt(renderClearButton props.CompletedCount props.OnClearCompleted)
         ]
 
-type MainSectionProps = { Todos: Domain.Todo[]; Dispatch: Domain.TodoAction->unit }
-type MainSectionState = { Filter: Domain.TodoFilter }
+type MainSectionProps = { Todos: Todo[]; Dispatch: TodoAction->unit }
+type MainSectionState = { Filter: TodoFilter }
 
 type MainSection(props, ctx) as this =
     inherit React.Component<MainSectionProps, MainSectionState>(props, ctx)
     let todoFilters =
         dict [
-            Domain.TodoFilter.ShowAll, fun _ -> true
-            Domain.TodoFilter.ShowActive, fun (todo: Domain.Todo) -> not todo.Completed
-            Domain.TodoFilter.ShowCompleted, fun todo -> todo.Completed
+            TodoFilter.ShowAll, fun _ -> true
+            TodoFilter.ShowActive, fun (todo: Todo) -> not todo.Completed
+            TodoFilter.ShowCompleted, fun todo -> todo.Completed
         ]
-    do this.state <- { Filter = Domain.TodoFilter.ShowAll } 
+    do this.state <- { Filter = TodoFilter.ShowAll } 
 
     member this.HandleClearCompleted() =
-        this.props.Dispatch(Domain.ClearCompleted)
+        this.props.Dispatch(ClearCompleted)
 
     member this.HandleShow(filter) =
         this.setState({ Filter = filter })
@@ -214,7 +211,7 @@ type MainSection(props, ctx) as this =
                 ClassName "toggle-all"
                 Type "checkbox"
                 Checked (completedCount = this.props.Todos.Length)
-                OnChange (fun _ -> this.props.Dispatch(Domain.CompleteAll))
+                OnChange (fun _ -> this.props.Dispatch(CompleteAll))
              ] [] |> Some
         else None
 
@@ -248,10 +245,10 @@ type MainSection(props, ctx) as this =
                         { new TodoItemProps with
                             member __.Todo = todo
                             member __.EditTodo(id, text) =
-                                this.props.Dispatch(Domain.EditTodo(id, text))
+                                this.props.Dispatch(EditTodo(id, text))
                             member __.DeleteTodo(id) =
-                                this.props.Dispatch(Domain.DeleteTodo id)
+                                this.props.Dispatch(DeleteTodo id)
                             member __.CompleteTodo(id) =
-                                this.props.Dispatch(Domain.CompleteTodo id) } []))
+                                this.props.Dispatch(CompleteTodo id) } []))
             R.opt(this.renderFooter completedCount)
         ]
