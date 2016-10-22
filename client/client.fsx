@@ -1,13 +1,19 @@
 #r "node_modules/fable-core/Fable.Core.dll"
 #load "node_modules/fable-import-react/Fable.Import.React.fs"
 #load "node_modules/fable-import-react/Fable.Helpers.React.fs"
-#load "components.fsx"
+#load "./components.fsx"
+#load "./domain.fsx"
+#load "./manager.fsx"
+#load "./redux.fsx"
 
 open Fable.Import
 open Fable.Core.JsInterop
+open Components
+open Domain
+open Manager
+open Redux
 
 module R = Fable.Helpers.React
-open Components
 
 importDefault("core-js/shim")
 importDefault("todomvc-common/base.js")

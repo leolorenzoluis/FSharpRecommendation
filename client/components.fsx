@@ -1,5 +1,5 @@
 (**
-## JavaScript bindings
+## JavaScript bindings
 
 Fable includes [React bindings and helpers](https://www.npmjs.com/package/fable-import-react)
 to make interaction with the tool more idiomatic in F#.
@@ -8,52 +8,9 @@ to make interaction with the tool more idiomatic in F#.
 #r "node_modules/fable-core/Fable.Core.dll"
 #load "node_modules/fable-import-react/Fable.Import.React.fs"
 #load "node_modules/fable-import-react/Fable.Helpers.React.fs"
-(**
-## Redux helper
+#load "./manager.fsx"
+#load "./domain.fsx"
 
-Fable's support for Redux is experimental and there're no bindings available.
-In order to use Redux in you Fable apps, just copy the code of the module below
-and be sure to add Redux as a JS dependency.
-*)
-
-module Redux =
-    open System
-    open Fable.Import
-    open Fable.Core
-    open Fable.Core.JsInterop
-
-    type IStore<'TState, 'TAction> = interface end
-
-    let [<Import("createStore","redux")>] private createStore' = obj()
-
-    let createStore (reducer: 'TState->'TAction->'TState) (initState: 'TState) =
-        // Check if the action is a union type before applying the reducer
-        let reducer = fun state action ->
-            match box action?Case with
-            | :? string -> reducer state action
-            | _ -> state
-        match unbox Browser.window?devToolsExtension with
-        | Some ext -> createStore'$(Func<_,_,_> reducer, initState, ext$())
-        | None -> createStore'$(Func<_,_,_> reducer, initState)
-        |> unbox<IStore<'TState, 'TAction>>
-
-    let dispatch (store: IStore<'TState, 'TAction>) (x: 'TAction) =
-        let x = toPlainJsObj x
-        x?``type`` <- x?Case
-        store?dispatch(x) |> ignore
-
-    let inline subscribe (store: IStore<'TState, 'TAction>) (f: unit->unit) =
-        store?subscribe(f) |> ignore
-
-    let inline getState (store: IStore<'TState, 'TAction>) =
-        store?getState() |> unbox<'TState>
-
-(**
-## Domain models
-
-Open the necessary namespaces, define our domain models (`Todo`, `TodoAction`, `TodoFilter`)
-and some utilities (key codes, `classNames`).
-*)
 
 open System
 open Fable.Core
@@ -62,28 +19,6 @@ open Fable.Import
 
 module R = Fable.Helpers.React
 open R.Props
-
-type Todo = { Text: string; Completed: bool; Id: int } 
-
-type TodoAction =
-    | AddTodo of text:string
-    | DeleteTodo of id:int
-    | EditTodo of id:int * text:string
-    | CompleteTodo of id:int
-    | CompleteAll
-    | ClearCompleted
-
-type TodoFilter =
-    | ShowAll = 0
-    | ShowActive = 1
-    | ShowCompleted = 2
-
-let [<Literal>] ESCAPE_KEY = 27.
-let [<Literal>] ENTER_KEY = 13.
-
-let classNames =
-    List.choose (fun (txt,add) -> if add then Some txt else None)
-    >> String.concat " "
 
 (**
 ## React components
@@ -108,7 +43,7 @@ type TodoTextInput(props, ctx) as this =
     do this.state <- { Text = defaultArg props.Text "" } 
 
     member this.HandleSubmit(e: React.KeyboardEvent) =
-        if e.which = ENTER_KEY then
+        if e.which = Domain.ENTER_KEY then
             let text = (unbox<string> e.target?value).Trim()
             this.props.OnSave(text)
             if this.props.NewTodo then
@@ -124,7 +59,7 @@ type TodoTextInput(props, ctx) as this =
     member this.render() =
         R.input [
             ClassName(
-                classNames [
+                Domain.classNames [
                     "edit", this.props.Editing
                     "new-todo", this.props.NewTodo
                 ])
@@ -137,7 +72,7 @@ type TodoTextInput(props, ctx) as this =
         ] []
 
 type TodoItemProps =
-    abstract Todo: Todo
+    abstract Todo: Domain.Todo
     abstract EditTodo: int * string -> unit
     abstract DeleteTodo: int -> unit
     abstract CompleteTodo: int -> unit
@@ -185,7 +120,7 @@ type TodoItem(props, ctx) as this =
                     ] []
                 ]
         R.li [ClassName(
-                classNames [
+                Domain.classNames [
                     "completed", this.props.Todo.Completed
                     "editing", this.state.Editing])]
              [element]
@@ -210,16 +145,16 @@ let Header (props: HeaderProps) =
 type FooterProps =
     abstract ActiveCount: int
     abstract CompletedCount: int
-    abstract Filter: TodoFilter
-    abstract OnShow: TodoFilter->unit
+    abstract Filter: Domain.TodoFilter
+    abstract OnShow: Domain.TodoFilter->unit
     abstract OnClearCompleted: React.SyntheticEvent->unit
 
 let Footer =
     let filterTitles =
         dict [
-            TodoFilter.ShowAll, "All"
-            TodoFilter.ShowActive, "Active"
-            TodoFilter.ShowCompleted, "Completed"
+            Domain.TodoFilter.ShowAll, "All"
+            Domain.TodoFilter.ShowActive, "Active"
+            Domain.TodoFilter.ShowCompleted, "Completed"
         ]
     let renderTodoCount activeCount =
         R.span [ClassName "todo-count"] [
@@ -230,7 +165,7 @@ let Footer =
         ]
     let renderFilterLink filter selectedFilter onShow =
         R.a [
-            ClassName (classNames ["selected", filter = selectedFilter])
+            ClassName (Domain.classNames ["selected", filter = selectedFilter])
             Style [unbox("cursor", "pointer")]
             OnClick (fun _ -> onShow filter)
         ] [R.str filterTitles.[filter]]
@@ -243,9 +178,9 @@ let Footer =
         else None
     fun (props: FooterProps) ->
         let listItems =
-            [ TodoFilter.ShowAll
-              TodoFilter.ShowActive
-              TodoFilter.ShowCompleted ]
+            [ Domain.TodoFilter.ShowAll
+              Domain.TodoFilter.ShowActive
+              Domain.TodoFilter.ShowCompleted ]
             |> List.map (fun filter ->
                 [renderFilterLink filter props.Filter props.OnShow]
                 |> R.li [Key (string filter)])
@@ -255,21 +190,21 @@ let Footer =
             R.opt(renderClearButton props.CompletedCount props.OnClearCompleted)
         ]
 
-type MainSectionProps = { Todos: Todo[]; Dispatch: TodoAction->unit }
-type MainSectionState = { Filter: TodoFilter }
+type MainSectionProps = { Todos: Domain.Todo[]; Dispatch: Domain.TodoAction->unit }
+type MainSectionState = { Filter: Domain.TodoFilter }
 
 type MainSection(props, ctx) as this =
     inherit React.Component<MainSectionProps, MainSectionState>(props, ctx)
     let todoFilters =
         dict [
-            TodoFilter.ShowAll, fun _ -> true
-            TodoFilter.ShowActive, fun (todo: Todo) -> not todo.Completed
-            TodoFilter.ShowCompleted, fun todo -> todo.Completed
+            Domain.TodoFilter.ShowAll, fun _ -> true
+            Domain.TodoFilter.ShowActive, fun (todo: Domain.Todo) -> not todo.Completed
+            Domain.TodoFilter.ShowCompleted, fun todo -> todo.Completed
         ]
-    do this.state <- { Filter = TodoFilter.ShowAll } 
+    do this.state <- { Filter = Domain.TodoFilter.ShowAll } 
 
     member this.HandleClearCompleted() =
-        this.props.Dispatch(ClearCompleted)
+        this.props.Dispatch(Domain.ClearCompleted)
 
     member this.HandleShow(filter) =
         this.setState({ Filter = filter })
@@ -280,7 +215,7 @@ type MainSection(props, ctx) as this =
                 ClassName "toggle-all"
                 Type "checkbox"
                 Checked (completedCount = this.props.Todos.Length)
-                OnChange (fun _ -> this.props.Dispatch(CompleteAll))
+                OnChange (fun _ -> this.props.Dispatch(Domain.CompleteAll))
              ] [] |> Some
         else None
 
@@ -314,83 +249,10 @@ type MainSection(props, ctx) as this =
                         { new TodoItemProps with
                             member __.Todo = todo
                             member __.EditTodo(id, text) =
-                                this.props.Dispatch(EditTodo(id, text))
+                                this.props.Dispatch(Domain.EditTodo(id, text))
                             member __.DeleteTodo(id) =
-                                this.props.Dispatch(DeleteTodo id)
+                                this.props.Dispatch(Domain.DeleteTodo id)
                             member __.CompleteTodo(id) =
-                                this.props.Dispatch(CompleteTodo id) } []))
+                                this.props.Dispatch(Domain.CompleteTodo id) } []))
             R.opt(this.renderFooter completedCount)
         ]
-
-(**
-## Subscription to Redux store
-
-The component on top of our UI hierarchy subscribes to the Redux store
-and will automatically invalidate children rendering as needed. React
-checks when DOM updates are actually necessary, so we don't need to worry
-about the performance hit of too frequent updates.
-*)
-
-type AppProps = { Store: Redux.IStore<Todo[], TodoAction> }
-
-type App(props, ctx) as this =
-    inherit React.Component<AppProps, MainSectionProps>(props, ctx)
-    let dispatch = Redux.dispatch props.Store
-    let getState() = { Todos=Redux.getState props.Store; Dispatch=dispatch }
-    do this.state <- getState()
-    do Redux.subscribe props.Store (getState >> this.setState)
-
-    member this.render() =
-        R.div [] [
-            R.fn Header { AddTodo = AddTodo >> dispatch } []
-            R.com<MainSection,_,_> this.state []
-        ]
-
-(**
-## Reducer
-
-The reducer is a single function (which can be composed of other smaller function)
-with the responsibility of updating the state in reaction to the actions
-dispatched to the Redux store. F# union types and pattern matching makes
-it really easy to identify and extract the data from the received actions
-in a type-safe manner. The compiler will even warn us if we forget to handle
-any of the possible `TodoAction` cases.
-*)
-
-// Implement the missing operations
-let reducer (state: Todo[]) = function
-    | AddTodo text ->
-        let id =
-            (-1, state)
-            ||> Array.fold(fun id todo -> max id todo.Id)
-            |> (+) 1
-        state
-        |> Array.append [|{Id=id; Completed=false; Text=text}|]
-    | DeleteTodo id ->
-        state
-        |> Array.filter(fun todo -> todo.Id <> id) 
-    | EditTodo(id, text) ->
-        state
-        |> Array.map(fun todo ->
-            if todo.Id = id
-            then { todo with Text=text }
-            else todo)
-    | CompleteTodo id ->
-        state
-        |> Array.map(fun todo ->
-            if todo.Id = id
-            then { todo with Completed=not todo.Completed }
-            else todo)
-    | CompleteAll ->
-        let areAllMarked =
-            state |> Array.forall(fun todo -> todo.Completed)
-        state
-        |> Array.map(fun todo -> { todo with Completed=not areAllMarked})
-    | ClearCompleted ->
-        state
-        |> Array.filter(fun todo -> not todo.Completed)
-
-let store =
-    { Text="Use Fable + React + Redux"; Completed=false; Id=0}
-    |> Array.singleton
-    |> Redux.createStore reducer
