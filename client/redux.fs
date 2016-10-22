@@ -27,8 +27,8 @@ type AppProps = { Store: IStore<Todo[], TodoAction> }
 type App(props, ctx) as this =
     inherit React.Component<AppProps, MainSectionProps>(props, ctx)
     let dispatch = dispatch props.Store
-    let b = { Todos = getState props.Store; Dispatch=dispatch }
-    let getState() = b
+    
+    let getState() = { Todos = getState props.Store; Dispatch=dispatch }
     do this.state <- getState()
     do subscribe props.Store (getState >> this.setState)
 
