@@ -5,11 +5,9 @@ Fable includes [React bindings and helpers](https://www.npmjs.com/package/fable-
 to make interaction with the tool more idiomatic in F#.
 *)
 
-#r "node_modules/fable-core/Fable.Core.dll"
-#load "node_modules/fable-import-react/Fable.Import.React.fs"
-#load "node_modules/fable-import-react/Fable.Helpers.React.fs"
-#load "manager.fsx"
-#load "domain.fsx"
+#r "./node_modules/fable-core/Fable.Core.dll"
+#load "./manager.fsx"
+#load "./domain.fsx"
 
 
 open System

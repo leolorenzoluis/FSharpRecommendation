@@ -1,7 +1,7 @@
-#load "node_modules/fable-import-react/Fable.Import.React.fs"
+#load "./manager.fsx"
+#load "./domain.fsx"
 #load "components.fsx"
-#load "domain.fsx"
-#load "manager.fsx"
+
 
 
 open System
