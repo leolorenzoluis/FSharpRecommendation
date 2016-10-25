@@ -48,6 +48,7 @@ let init = function
 type Msg = 
     | Add
     | UpdateField of string
+    | Delete of int
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
@@ -55,20 +56,17 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         let xs = if System.String.IsNullOrEmpty model.value then
                     model.items
                  else
-                    model.items @ [{ description = model.value; id = model.uid }]
+                    model.items @ [{ description = model.value; id = model.uid + 1 }]
         { model with
             value = ""
             items = xs }, []
     | UpdateField newValue ->
         { model with value = newValue } , []
+    | Delete id ->
+        { model with items = List.filter(fun x -> x.id <> id) model.items }, []
 
 open Fable.Helpers.React.Props
 
-
-let viewEntry (dispatch : Msg -> unit) (item : Item) = 
-    R.input 
-        [ DefaultValue (U2.Case1 item.description) ]
-        []
 
 let internal onEnter msg dispatch =
     function
@@ -77,6 +75,22 @@ let internal onEnter msg dispatch =
         dispatch msg
     | _ -> ()
     |> OnKeyDown
+let viewEntry (dispatch : Msg -> unit) (item : Item) = 
+    R.div 
+        []
+        [   
+            R.input 
+                [ 
+                    DefaultValue (U2.Case1 item.description) 
+                ]
+                []
+            R.button 
+                [
+                    OnClick (fun _ -> Delete item.id |> dispatch)
+                ]
+                [ unbox "Delete me" ]
+        ]
+
 
 let view (model:Model) dispatch =
     R.div
@@ -84,7 +98,7 @@ let view (model:Model) dispatch =
         [ 
             R.input
                 [
-                    Placeholder "Put something here bitch"
+                    Placeholder "Put something here"
                     Value (U2.Case1 model.value)
                     OnChange ((fun (ev:React.FormEvent) -> ev.target?value) >> unbox >> UpdateField >> dispatch)
                     onEnter Add dispatch
