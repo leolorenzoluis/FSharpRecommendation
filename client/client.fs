@@ -41,6 +41,11 @@ let emptyModel = {
     value = ""
 }
 
+
+let newEntry desc id =
+  { description = desc
+    id = id }
+
 let init = function
   | Some savedModel -> savedModel, []
   | _ -> emptyModel, []
@@ -56,8 +61,9 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         let xs = if System.String.IsNullOrEmpty model.value then
                     model.items
                  else
-                    model.items @ [{ description = model.value; id = model.uid + 1 }]
+                    model.items @ [{ description = model.value; id = model.uid }]
         { model with
+            uid = model.uid + 1
             value = ""
             items = xs }, []
     | UpdateField newValue ->
@@ -79,6 +85,9 @@ let viewEntry (dispatch : Msg -> unit) (item : Item) =
     R.div 
         []
         [   
+            R.p
+                []
+                [ unbox item.id ]
             R.input 
                 [ 
                     DefaultValue (U2.Case1 item.description) 
@@ -102,6 +111,7 @@ let view (model:Model) dispatch =
                     Value (U2.Case1 model.value)
                     OnChange ((fun (ev:React.FormEvent) -> ev.target?value) >> unbox >> UpdateField >> dispatch)
                     onEnter Add dispatch
+                    AutoFocus true
                 ]
                 []
             R.p 
