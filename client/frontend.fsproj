@@ -35,12 +35,16 @@
     <Reference Include="./node_modules/fable-core/Fable.Core.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="./node_modules/fable-import-react/Fable.Import.React.fs"/>
-    <Compile Include="./node_modules/fable-import-react/Fable.Helpers.React.fs"/>
-    <Compile Include="domain.fs" />
-    <Compile Include="components.fs" />
-    <Compile Include="reduxmanager.fs" />
-    <Compile Include="redux.fs" />
+    <Compile Include="./node_modules/fable-import-react/Fable.Import.React.fs" />
+    <Compile Include="./node_modules/fable-import-react/Fable.Helpers.React.fs" />
+    <Compile Include="./node_modules/fable-import-fetch/Fable.Import.Fetch.fs" />
+    <Compile Include="./node_modules/fable-import-fetch/Fable.Helpers.Fetch.fs" />
+    <Compile Include="./node_modules/fable-elmish/elmish.fs" />
+    <Compile Include="./node_modules/fable-elmish/elmish-browser-nav.fs" />
+    <Compile Include="./node_modules/fable-elmish/elmish-result.fs" />
+    <Compile Include="./node_modules/fable-elmish/elmish-parser.fs" />
+    <Compile Include="./node_modules/fable-elmish-react/elmish-app.fs" />
+    <Compile Include="./node_modules/fable-elmish-react/elmish-react.fs" />
     <Compile Include="client.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
