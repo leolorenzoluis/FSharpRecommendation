@@ -62,6 +62,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
                     model.items
                  else
                     model.items @ [{ description = model.value; id = model.uid }]
+        
         { model with
             uid = model.uid + 1
             value = ""
@@ -88,6 +89,15 @@ let viewEntry (dispatch : Msg -> unit) (item : Item) =
             R.p
                 []
                 [ unbox item.id ]
+            
+            R.label 
+                [
+                    Style [ BackgroundColor "red" ]
+                ]
+                [
+                    unbox item.description
+                    
+                ]
             R.input 
                 [ 
                     DefaultValue (U2.Case1 item.description) 
@@ -117,7 +127,7 @@ let view (model:Model) dispatch =
             R.p 
                 []
                 [unbox "Hello"]
-            R.ul
+            R.div
                 []
                 (model.items
                 |> List.map(viewEntry dispatch))

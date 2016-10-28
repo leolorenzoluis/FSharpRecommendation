@@ -213,9 +213,6 @@ let viewEntries visibility entries dispatch =
     let cssVisibility =
         if List.isEmpty entries then "hidden" else "visible"
 
-    let a = (entries
-           |> List.filter isVisible  
-           |> List.map (viewEntry dispatch)) 
     R.section
       [ ClassName "main"
         Style [ Visibility cssVisibility ]]
@@ -231,8 +228,9 @@ let viewEntries visibility entries dispatch =
           [ unbox "Mark all as complete" ]
         R.ul 
           [ ClassName "todo-list" ]
-          a
-          ]
+          (entries
+           |> List.filter isVisible  
+           |> List.map (viewEntry dispatch)) ]
 
 // VIEW CONTROLS AND FOOTER
 let visibilitySwap uri visibility actualVisibility dispatch =
