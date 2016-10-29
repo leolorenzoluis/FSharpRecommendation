@@ -57,7 +57,7 @@ type Msg =
     | Add
     | UpdateField of string
     | Delete of int
-    | Edit of Item*int
+    | Edit of int*string
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
@@ -76,9 +76,9 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         { model with value = newValue } , []
     | Delete id ->
         { model with items = List.filter(fun x -> x.id <> id) model.items }, []
-    | Edit (itemToEdit, id) ->
+    | Edit (id, newValue) ->
         let updateEntry (item : Item) =
-            if item.id = itemToEdit.id then { itemToEdit with editMode = not item.editMode } else item
+            if item.id = id then { item with editMode = not item.editMode; description=newValue } else item
         { model with items = List.map(updateEntry) model.items }, []
 
 open Fable.Helpers.React.Props
@@ -106,22 +106,22 @@ let viewEntry (dispatch : Msg -> unit) (item : Item) =
             
             R.label 
                 [
-                    Style [ BackgroundColor "blue" ]
+
+                    classList ["edit-mode", item.editMode; "",not item.editMode]
                 ]
                 [
                     unbox item.description
-                    
-                ]
+                                    ]
             R.input 
                 [ 
-                    classList ["edit-mode", item.editMode; "",not item.editMode]
+                    classList ["", item.editMode; "edit-mode",not item.editMode]
                     DefaultValue (U2.Case1 item.description) 
+                    OnBlur (fun ev -> Edit (item.id,unbox ev.target?value) |> dispatch)
                 ]
                 []
-
             R.button 
                 [
-                    OnClick (fun _ -> Edit (item,item.id) |> dispatch)
+                    OnClick (fun _ -> Edit (item.id, item.description) |> dispatch)
                 ]
                 [ unbox "Edit me" ]
             R.button 
