@@ -27,6 +27,7 @@ module S =
 type Item = {
     description : string
     id : int
+    editMode : bool
 }
 
 type Model = {
@@ -44,7 +45,9 @@ let emptyModel = {
 
 let newEntry desc id =
   { description = desc
-    id = id }
+    id = id 
+    editMode = false
+    }
 
 let init = function
   | Some savedModel -> savedModel, []
@@ -54,6 +57,7 @@ type Msg =
     | Add
     | UpdateField of string
     | Delete of int
+    | Edit of Item*int
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
@@ -61,7 +65,8 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         let xs = if System.String.IsNullOrEmpty model.value then
                     model.items
                  else
-                    model.items @ [{ description = model.value; id = model.uid }]
+                    model.items @ [{ description = model.value; id = model.uid;
+                    editMode = false }]
         
         { model with
             uid = model.uid + 1
@@ -71,9 +76,18 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         { model with value = newValue } , []
     | Delete id ->
         { model with items = List.filter(fun x -> x.id <> id) model.items }, []
+    | Edit (itemToEdit, id) ->
+        let updateEntry (item : Item) =
+            if item.id = itemToEdit.id then { itemToEdit with editMode = not item.editMode } else item
+        { model with items = List.map(updateEntry) model.items }, []
 
 open Fable.Helpers.React.Props
 
+
+let internal classList classes =
+    classes 
+    |> List.fold (fun complete -> function | (name,true) -> complete + " " + name | _ -> complete) ""
+    |> ClassName
 
 let internal onEnter msg dispatch =
     function
@@ -100,9 +114,16 @@ let viewEntry (dispatch : Msg -> unit) (item : Item) =
                 ]
             R.input 
                 [ 
+                    classList ["edit-mode", item.editMode; "",not item.editMode]
                     DefaultValue (U2.Case1 item.description) 
                 ]
                 []
+
+            R.button 
+                [
+                    OnClick (fun _ -> Edit (item,item.id) |> dispatch)
+                ]
+                [ unbox "Edit me" ]
             R.button 
                 [
                     OnClick (fun _ -> Delete item.id |> dispatch)
