@@ -92,7 +92,7 @@ let viewEntry (dispatch : Msg -> unit) (item : Item) =
             
             R.label 
                 [
-                    Style [ BackgroundColor "red" ]
+                    Style [ BackgroundColor "blue" ]
                 ]
                 [
                     unbox item.description
