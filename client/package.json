@@ -19,20 +19,23 @@
     "css-loader": "^0.25.0",
     "fable-compiler": "^0.6.15",
     "fable-core": "^0.6.10",
-    
+    "fable-elmish": "^0.4.4",
+    "fable-elmish-react": "^0.1.1",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "redux": "^3.6.0",
     "requirejs": "^2.2.0",
-    
     "style-loader": "^0.13.1",
     "todomvc-app-css": "^2.0.6",
     "todomvc-common": "^1.0.2",
-    "virtual-dom": "^2.1.1"
+    "virtual-dom": "^2.1.1",
+    "webpack": "^1.13.3"
   },
   "devDependencies": {
+    "babel-plugin-transform-runtime": "^6.15.0",
+    "babel-runtime": "^6.18.0",
     "fable-import-react": "^0.5.2",
-    "fable-elmish": "^0.4.0",
+    "fable-elmish": "^0.4.4",
     "fable-elmish-react": "^0.1.0",
     "fable-import-fetch": "^0.2.4",
     "source-map-loader": "^0.1.5",

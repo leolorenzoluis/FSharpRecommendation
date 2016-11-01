@@ -4,6 +4,9 @@ open Fable.Core
 open Fable.Import
 open Fable.Core.JsInterop
 open Elmish
+open Elmish.Browser.Navigation
+open Fable.Import.Browser
+open Elmish.UrlParser
 
 importDefault("core-js/shim")
 importDefault("todomvc-common/base.js")
@@ -30,18 +33,50 @@ type Item = {
     editMode : bool
 }
 
+type Page = Home | Blog of int | Search of string
+
 type Model = {
     items : Item list
     uid : int
     value : string
+    page : Page
 }
+// Types
 
+
+let toHash = 
+    function
+    | Home -> "#home"
+    | Blog id -> "#blog/" + (string id)
+    | Search query -> "#search/" + query
+(* If the URL is valid, we just update our model or issue a command. 
+If it is not a valid URL, we modify the URL to whatever makes sense.
+*)
+let urlUpdate (result:Result<Page,string>) model =
+  match result with
+  | Error e ->
+      Browser.console.error("Error parsing url:", e)  
+      ( model, Navigation.modifyUrl (toHash model.page) )
+
+/// The URL is turned into a Result.
+let pageParser : Parser<Page->_,_> =
+  oneOf
+    [ format Home (s "home")
+      format Blog (s "blog" </> i32)
+      format Search (s "search" </> str) ]
+
+let hashParser (location:Location) =
+  UrlParser.parse id pageParser (location.hash.Substring 1)
+
+let traceUrlUpdate (result:Result<Page,string>) m = 
+    console.log("UrlUpdate:", result)
+    urlUpdate result m
 let emptyModel = {
     items = []
     uid = 0
     value = ""
+    page = Page.Home
 }
-
 
 let newEntry desc id =
   { description = desc
@@ -89,6 +124,18 @@ let internal classList classes =
     |> List.fold (fun complete -> function | (name,true) -> complete + " " + name | _ -> complete) ""
     |> ClassName
 
+
+let toHash = 
+    function
+    | Home -> "#home"
+    | Blog id -> "#blog/" + (string id)
+    | Search query -> "#search/" + query
+
+let viewLink page description =
+    R.a 
+        [ Href (toHash page) ]
+        [ unbox description ]
+
 let internal onEnter msg dispatch =
     function
     | (ev:React.KeyboardEvent) when ev.keyCode = 13. ->
@@ -106,7 +153,6 @@ let viewEntry (dispatch : Msg -> unit) (item : Item) =
             
             R.label 
                 [
-
                     classList ["edit-mode", item.editMode; "",not item.editMode]
                 ]
                 [
@@ -136,6 +182,9 @@ let view (model:Model) dispatch =
     R.div
         []
         [ 
+            viewLink Home "Home"
+            viewLink (Blog 42) "Test 1"
+            viewLink (Blog 30) "Test 2"
             R.input
                 [
                     Placeholder "Put something here"
@@ -158,4 +207,4 @@ open Elmish.React
 // App
 Program.mkProgram (S.load >> init) update view
 |> Program.withConsoleTrace
-|> Program.toHtml Program.run "main"
+|> Program.toHtml (Program.runWithNavigation hashParser traceUrlUpdate) "main"
