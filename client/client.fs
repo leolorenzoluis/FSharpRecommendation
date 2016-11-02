@@ -2,19 +2,10 @@ module Main
 
 open Fable.Core
 open Fable.Import
-open Fable.Core.JsInterop
 open Elmish
-open Elmish.Browser.Navigation
 open Fable.Import.Browser
+open Elmish.Browser.Navigation
 open Elmish.UrlParser
-
-importDefault("core-js/shim")
-importDefault("todomvc-common/base.js")
-importDefault("todomvc-common/base.css")
-importDefault("todomvc-app-css/index.css")
-
-// Rendering views with React
-module R = Fable.Helpers.React
 
 // Local storage interface
 module S =
@@ -57,6 +48,8 @@ let urlUpdate (result:Result<Page,string>) model =
   | Error e ->
       Browser.console.error("Error parsing url:", e)  
       ( model, Navigation.modifyUrl (toHash model.page) )
+   | Ok page ->
+      { model with page = page}, []
 
 /// The URL is turned into a Result.
 let pageParser : Parser<Page->_,_> =
@@ -84,15 +77,20 @@ let newEntry desc id =
     editMode = false
     }
 
-let init = function
-  | Some savedModel -> savedModel, []
-  | _ -> emptyModel, []
+let init result =
+  urlUpdate result { 
+    items = []
+    uid = 0
+    value = ""
+    page = Page.Home }
 
 type Msg = 
     | Add
     | UpdateField of string
     | Delete of int
     | Edit of int*string
+
+// Update
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
@@ -116,7 +114,17 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
             if item.id = id then { item with editMode = not item.editMode; description=newValue } else item
         { model with items = List.map(updateEntry) model.items }, []
 
+
+// Views
+// Rendering views with React
+open Fable.Helpers.React
 open Fable.Helpers.React.Props
+open Fable.Core.JsInterop
+
+importDefault("core-js/shim")
+importDefault("todomvc-common/base.js")
+importDefault("todomvc-common/base.css")
+importDefault("todomvc-app-css/index.css")
 
 
 let internal classList classes =
@@ -124,15 +132,8 @@ let internal classList classes =
     |> List.fold (fun complete -> function | (name,true) -> complete + " " + name | _ -> complete) ""
     |> ClassName
 
-
-let toHash = 
-    function
-    | Home -> "#home"
-    | Blog id -> "#blog/" + (string id)
-    | Search query -> "#search/" + query
-
 let viewLink page description =
-    R.a 
+    a 
         [ Href (toHash page) ]
         [ unbox description ]
 
@@ -143,34 +144,35 @@ let internal onEnter msg dispatch =
         dispatch msg
     | _ -> ()
     |> OnKeyDown
+
 let viewEntry (dispatch : Msg -> unit) (item : Item) = 
-    R.div 
+    div 
         []
         [   
-            R.p
+            p
                 []
                 [ unbox item.id ]
             
-            R.label 
+            label 
                 [
                     classList ["edit-mode", item.editMode; "",not item.editMode]
                 ]
                 [
                     unbox item.description
                                     ]
-            R.input 
+            input 
                 [ 
                     classList ["", item.editMode; "edit-mode",not item.editMode]
                     DefaultValue (U2.Case1 item.description) 
                     OnBlur (fun ev -> Edit (item.id,unbox ev.target?value) |> dispatch)
                 ]
                 []
-            R.button 
+            button 
                 [
                     OnClick (fun _ -> Edit (item.id, item.description) |> dispatch)
                 ]
                 [ unbox "Edit me" ]
-            R.button 
+            button 
                 [
                     OnClick (fun _ -> Delete item.id |> dispatch)
                 ]
@@ -178,14 +180,30 @@ let viewEntry (dispatch : Msg -> unit) (item : Item) =
         ]
 
 
+
+let words size message =
+  span [ Style [ unbox("fontSize", size |> sprintf "%dpx") ] ] [ unbox message ]
+
+let viewPage model dispatch =
+  match model.page with
+  | Home ->
+      [ words 60 "Welcome!"
+        unbox "Play with the links and search bar above. (Press ENTER to trigger the zip code search.)" ]
+
+  | Blog id ->
+      [ words 20 "This is blog post number"
+        words 100 (string id) ]
+
+        
+
 let view (model:Model) dispatch =
-    R.div
+    div
         []
         [ 
             viewLink Home "Home"
             viewLink (Blog 42) "Test 1"
             viewLink (Blog 30) "Test 2"
-            R.input
+            input
                 [
                     Placeholder "Put something here"
                     Value (U2.Case1 model.value)
@@ -194,18 +212,20 @@ let view (model:Model) dispatch =
                     AutoFocus true
                 ]
                 []
-            R.p 
+            p 
                 []
                 [unbox "Hello world"]
-            R.div
+            div
                 []
                 (model.items
                 |> List.map(viewEntry dispatch))
+            
+            hr [] []
+            div [  ] (viewPage model dispatch)
         ]
 
 open Elmish.React
 // App
-let b =   (Program.runWithNavigation hashParser traceUrlUpdate)
-Program.mkProgram (S.load >> init) update view
+Program.mkProgram init update view
 |> Program.withConsoleTrace
 |> Program.toHtml (Program.runWithNavigation hashParser traceUrlUpdate) "main"
