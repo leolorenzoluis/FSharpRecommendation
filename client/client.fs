@@ -196,7 +196,7 @@ let view (model:Model) dispatch =
                 []
             R.p 
                 []
-                [unbox "Hello"]
+                [unbox "Hello world"]
             R.div
                 []
                 (model.items
@@ -205,6 +205,7 @@ let view (model:Model) dispatch =
 
 open Elmish.React
 // App
+let b =   (Program.runWithNavigation hashParser traceUrlUpdate)
 Program.mkProgram (S.load >> init) update view
 |> Program.withConsoleTrace
 |> Program.toHtml (Program.runWithNavigation hashParser traceUrlUpdate) "main"
