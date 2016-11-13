@@ -4,3 +4,4 @@ packages
 .ionide.debug
 client/node_modules
 client/out
+secrets.fsx
