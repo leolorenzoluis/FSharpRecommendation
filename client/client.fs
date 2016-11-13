@@ -9,14 +9,14 @@ open Elmish.UrlParser
 
 // Local storage interface
 module S =
-    let private STORAGE_KEY = "elmish-react-todomvc"
+    let private storageKey = "elmish-react-todomvc"
     let load<'T> (): 'T option =
-        Browser.localStorage.getItem(STORAGE_KEY)
+        Browser.localStorage.getItem(storageKey)
         |> unbox 
         |> Core.Option.map (JS.JSON.parse >> unbox<'T>)
 
     let save<'T> (model: 'T) =
-        Browser.localStorage.setItem(STORAGE_KEY, JS.JSON.stringify model)
+        Browser.localStorage.setItem(storageKey, JS.JSON.stringify model)
 
 type Item = {
     description : string
@@ -68,7 +68,7 @@ let emptyModel = {
     items = []
     uid = 0
     value = ""
-    page = Page.Home
+    page = Page.Home 
 }
 
 let newEntry desc id =
@@ -203,6 +203,8 @@ let view (model:Model) dispatch =
             viewLink Home "Home"
             viewLink (Blog 42) "Test 1"
             viewLink (Blog 30) "Test 2"
+
+            viewLink (Blog 5000) "Test 3"
             input
                 [
                     Placeholder "Put something here"
@@ -229,3 +231,4 @@ open Elmish.React
 Program.mkProgram init update view
 |> Program.withConsoleTrace
 |> Program.toHtml (Program.runWithNavigation hashParser traceUrlUpdate) "main"
+
